@@ -25,7 +25,7 @@ Find your next favorite movie based on what you already love. Powered by machine
 
 ## 🖼️ Sneak Peek
 
-![Movie Recommendation System Preview](![Uploading image.png…](https://github.com/PrabhjotSinghUbhi/Movie-Recommendation-System/blob/main/previewMOVIES.png)
+![Movie Recommendation System Preview](https://github.com/PrabhjotSinghUbhi/Movie-Recommendation-System/blob/main/previewMOVIES.png)
 ---
 
 ## 🛠️ Tech Stack
