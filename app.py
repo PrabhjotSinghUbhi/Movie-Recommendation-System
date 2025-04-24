@@ -1,22 +1,23 @@
+from flask import Flask, request, jsonify, render_template
 import pickle
-import streamlit as st
 import requests
 
+app = Flask(__name__)
 
-# function to fetch movie poster
+# Load preprocessed data
+movies = pickle.load(open('./movie_list.pkl', 'rb'))
+similarity = pickle.load(open('./similarity.pkl', 'rb'))
+
+# Function to fetch movie poster
 def fetch_poster(movie_id):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US"
-    data = requests.get(url)
-    data = data.json()
+    data = requests.get(url).json()
     poster_path = data.get('poster_path')
     if poster_path:
-        full_path = "https://image.tmdb.org/t/p/w500/" + poster_path
-        return full_path
-    else:
-        return "https://via.placeholder.com/500"
+        return f"https://image.tmdb.org/t/p/w500/{poster_path}"
+    return "https://via.placeholder.com/500"
 
-
-# function to recommend movies
+# Function to recommend movies
 def recommend(movie):
     index = movies[movies['title'] == movie].index[0]
     distances = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda x: x[1])
@@ -30,27 +31,19 @@ def recommend(movie):
 
     return recommended_movie_names, recommended_movie_posters
 
+# Flask routes
+@app.route('/')
+def home():
+    return render_template('index.html', movies=movies['title'].values)
 
-# Streamlit UI
-st.set_page_config(page_title="Movie Recommender", layout="wide")
-st.title('🎬 Movie Recommender System')
+@app.route('/recommend', methods=['POST'])
+def recommend_movies():
+    movie = request.form['movie']
+    recommended_movie_names, recommended_movie_posters = recommend(movie)
+    return jsonify({
+        'names': recommended_movie_names,
+        'posters': recommended_movie_posters
+    })
 
-movies = pickle.load(open('./movie_list.pkl', 'rb'))
-similarity = pickle.load(open('./similarity.pkl', 'rb'))
-
-movie_list = movies['title'].values
-selected_movie = st.selectbox(
-    "🎥 Type or select a movie from the dropdown",
-    movie_list
-)
-
-if st.button('🚀 Show Recommendation'):
-    recommended_movie_names, recommended_movie_posters = recommend(selected_movie)
-
-    st.markdown("## 🎞️ Recommended Movies for You")
-    cols = st.columns(5)  # create 5 columns
-
-    for idx, col in enumerate(cols):
-        with col:
-            st.image(recommended_movie_posters[idx], use_container_width=True)  # ✅ updated
-            st.markdown(f"**{recommended_movie_names[idx]}**", unsafe_allow_html=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
